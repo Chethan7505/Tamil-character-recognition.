@@ -27,17 +27,17 @@ def url_to_img(dataURL):
     inverted = ImageOps.invert(converted)
 
     bounding_box = inverted.getbbox()
-    padded_box = tuple(map(lambda i,j: i+j, bounding_box, (-5, -5, 5, 5)))
+    padded_box = tuple(map(lambda i, j: i + j, bounding_box, (-5, -5, 5, 5)))
     cropped = inverted.crop(padded_box)
 
     thick = cropped.filter(ImageFilter.MaxFilter(5))
 
     ratio = 48.0 / max(thick.size)
-    new_size = tuple([int(round(x*ratio)) for x in thick.size])
+    new_size = tuple([int(round(x * ratio)) for x in thick.size])
     res = thick.resize(new_size, Image.LANCZOS)
 
     arr = np.asarray(res)
-    com = ndimage.measurements.center_of_mass(arr)
+    com = ndimage.center_of_mass(arr)   # fixed: no longer uses deprecated measurements submodule
     result = Image.new("L", (64, 64))
     box = (int(round(32.0 - com[1])), int(round(32.0 - com[0])))
     result.paste(res, box)
@@ -45,8 +45,12 @@ def url_to_img(dataURL):
 
 
 def transformImg(img):
-    my_transforms = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5), (0.5))])
-    return my_transforms(img).unsqueeze(0)
+    my_transforms = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5,), (0.5,))
+    ])
+    return my_transforms(img).unsqueeze(0)   # ← fixed: only ONE return here
+
 
 def get_prediction(url, net):
     img = url_to_img(url)
@@ -55,4 +59,4 @@ def get_prediction(url, net):
     prob, predicted = torch.max(output.data, 1)
     confidence = int(round(prob.item() * 100))
     print(classes[predicted] + " " + str(confidence))
-    return classes[predicted] + " " + str(confidence)
+    return classes[predicted] + " " + str(confidence)  # ← fixed: return is HERE, inside get_prediction
