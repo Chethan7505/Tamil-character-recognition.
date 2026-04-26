@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>TamilNet — Tamil Character Recognition</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="static/styles.css">
+    <script src="static/main.js"></script>
+</head>
+<body>
+
+<div class="bg-orbs">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+    <div class="orb orb4"></div>
+</div>
+
+<!-- HERO -->
+<header class="hero">
+    <div class="hero-badge">🧠 Deep Learning &nbsp;·&nbsp; CNN &nbsp;·&nbsp; PyTorch</div>
+    <h1 class="hero-title">Tamil<span class="accent">Net</span></h1>
+    <p class="hero-sub">Handwritten Tamil Character Recognition using Convolutional Neural Networks</p>
+    <div class="stats-row">
+        <div class="stat-pill"><span class="stat-num" data-target="156">0</span><span class="stat-label">Character Classes</span></div>
+        <div class="stat-pill"><span class="stat-num" data-target="500">0</span><span class="stat-suffix">K+</span><span class="stat-label">Training Images</span></div>
+        <div class="stat-pill"><span class="stat-num" data-target="92">0</span><span class="stat-suffix">%</span><span class="stat-label">Val Accuracy</span></div>
+        <div class="stat-pill"><span class="stat-num" data-target="30">0</span><span class="stat-label">Epochs Trained</span></div>
+    </div>
+</header>
+
+<!-- APP CARD -->
+<main class="app-section">
+    <div class="glass-card app-card">
+        <div class="tab-switcher">
+            <button class="tab-btn active" id="tab-draw" onclick="switchTab('draw')">✏️ Draw</button>
+            <button class="tab-btn" id="tab-upload" onclick="switchTab('upload')">📷 Upload Image</button>
+        </div>
+
+        <div class="app-body">
+
+            <!-- DRAW MODE -->
+            <div id="draw-section" class="mode-section">
+                <div class="instructions glass-mini">
+                    <h3>How to use</h3>
+                    <ol>
+                        <li id="suggestion">Draw a Tamil character on the canvas →</li>
+                        <li>Click <strong>Read</strong> to get the model's prediction.</li>
+                        <li>Click <strong>Clear</strong> to try again.</li>
+                    </ol>
+                </div>
+                <div class="canvas-wrap">
+                    <canvas id="canvas" width="250" height="250"></canvas>
+                </div>
+                <div class="btn-group">
+                    <button class="btn-glass" onclick="clearCanvas()">Clear</button>
+                    <button class="btn-glow" onclick="submitImage()">Read</button>
+                </div>
+            </div>
+
+            <!-- UPLOAD MODE -->
+            <div id="upload-section" class="mode-section" style="display:none">
+                <div class="instructions glass-mini">
+                    <h3>How to use</h3>
+                    <ol>
+                        <li>Take a photo of a <strong>single</strong> handwritten Tamil character on white paper.</li>
+                        <li>Click <strong>Read Image</strong> — the AI will predict the character!</li>
+                        <li>💡 Tip: Dark pen on white paper gives best results.</li>
+                    </ol>
+                </div>
+                <div id="drop-zone" onclick="document.getElementById('file-input').click()">
+                    <div id="drop-inner">
+                        <div class="drop-icon">📷</div>
+                        <p>Click or drag &amp; drop image here</p>
+                        <span>JPG · PNG · WEBP supported</span>
+                    </div>
+                    <img id="preview-img" alt="preview" style="display:none"/>
+                </div>
+                <input type="file" id="file-input" accept="image/*" onchange="handleFileSelect(event)" style="display:none"/>
+                <div class="btn-group">
+                    <button class="btn-glass" onclick="clearUpload()">Clear</button>
+                    <button class="btn-glow" onclick="submitUpload()">Read Image</button>
+                </div>
+                <div class="spinner" id="upload-spinner"></div>
+            </div>
+
+            <!-- RESULT AREA -->
+            <div class="result-area">
+                <p class="result-label">My Guess</p>
+                <div class="result-char-box">
+                    <p id="guess" class="result-char"></p>
+                    <div id="result-idle" class="result-idle">
+                        <div class="idle-ring"></div>
+                        <span>Waiting…</span>
+                    </div>
+                </div>
+                <p id="confidence" class="result-conf"></p>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<!-- ABOUT SECTION -->
+<section class="about-section">
+
+    <div class="glass-card info-card fade-up">
+        <div class="info-icon">🔬</div>
+        <h2>About the Project</h2>
+        <p>TamilNet is an end-to-end deep learning system for recognising handwritten Tamil script — one of the world's oldest classical languages. Tamil has a complex alphabet of <strong>247 characters</strong>. Our model covers the <strong>156 most commonly written</strong> characters, including vowels (<em>uyir</em>), consonants (<em>mei</em>), and compound characters (<em>uyir-mei</em>).</p>
+        <p style="margin-top:12px">The system accepts a drawn stroke or a real photograph, applies centre-of-mass normalisation, thickens the strokes to match training conditions, and feeds the result through a deep CNN to output a confident prediction in milliseconds.</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="glass-card stat-card fade-up" style="animation-delay:.08s">
+            <div class="stat-big">156</div>
+            <div class="stat-card-label">Tamil Classes</div>
+            <div class="stat-card-sub">Vowels · Consonants · Compounds</div>
+        </div>
+        <div class="glass-card stat-card fade-up" style="animation-delay:.16s">
+            <div class="stat-big">92%</div>
+            <div class="stat-card-label">Validation Accuracy</div>
+            <div class="stat-card-sub">Epoch 30 · Val Loss 0.325</div>
+        </div>
+        <div class="glass-card stat-card fade-up" style="animation-delay:.24s">
+            <div class="stat-big">500K+</div>
+            <div class="stat-card-label">Training Images</div>
+            <div class="stat-card-sub">HP Labs India Tamil Dataset</div>
+        </div>
+        <div class="glass-card stat-card fade-up" style="animation-delay:.32s">
+            <div class="stat-big">6</div>
+            <div class="stat-card-label">Conv Layers</div>
+            <div class="stat-card-sub">16 → 32 → 64 filters</div>
+        </div>
+    </div>
+
+    <div class="glass-card info-card fade-up" style="animation-delay:.1s">
+        <div class="info-icon">⚙️</div>
+        <h2>Development Process</h2>
+        <div class="timeline">
+            <div class="tl-item">
+                <div class="tl-dot">1</div>
+                <div class="tl-body">
+                    <strong>Dataset Preparation</strong>
+                    <p>Downloaded the HP Labs India handwritten Tamil dataset. Preprocessed 500K+ images into 156 class folders, normalised to 64×64 grayscale using centre-of-mass alignment and stroke thickening (MaxFilter).</p>
+                </div>
+            </div>
+            <div class="tl-item">
+                <div class="tl-dot">2</div>
+                <div class="tl-body">
+                    <strong>CNN Architecture Design</strong>
+                    <p>Designed a custom 6-layer CNN: three Conv→BN→ReLU→MaxPool blocks with increasing depth (16→32→64 filters), followed by fully-connected layers of 1024→512→156 neurons with BatchNorm regularisation.</p>
+                </div>
+            </div>
+            <div class="tl-item">
+                <div class="tl-dot">3</div>
+                <div class="tl-body">
+                    <strong>Training on Google Colab (GPU)</strong>
+                    <p>Trained for 30 epochs using a free T4 GPU on Google Colab. Accuracy climbed from 74% in Epoch 1 to <strong>92.2% validation accuracy</strong> by Epoch 30. Model saved as <code>tamil_net.pt</code>.</p>
+                </div>
+            </div>
+            <div class="tl-item">
+                <div class="tl-dot">4</div>
+                <div class="tl-body">
+                    <strong>Flask Web Application</strong>
+                    <p>Built a Python Flask backend. The canvas drawing is sent as a base64 PNG and decoded server-side. Added a second <code>/predict_upload</code> route to handle real photo uploads through the same preprocessing pipeline.</p>
+                </div>
+            </div>
+            <div class="tl-item">
+                <div class="tl-dot">5</div>
+                <div class="tl-body">
+                    <strong>Image Recognition Feature</strong>
+                    <p>Extended the app to recognise real handwriting photos. The pipeline automatically inverts dark-on-white photos, crops the character, thickens strokes, and centre-aligns to 64×64 — identical to training data format.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card info-card fade-up" style="animation-delay:.2s">
+        <div class="info-icon">🏗️</div>
+        <h2>Model Architecture</h2>
+        <div class="arch-flow">
+            <div class="arch-block input-b">Input<br/><small>64×64 Gray</small></div>
+            <div class="arch-arrow">→</div>
+            <div class="arch-block">Conv ×2<br/><small>16 filters</small></div>
+            <div class="arch-arrow">→</div>
+            <div class="arch-block">Conv ×2<br/><small>32 filters</small></div>
+            <div class="arch-arrow">→</div>
+            <div class="arch-block">Conv ×2<br/><small>64 filters</small></div>
+            <div class="arch-arrow">→</div>
+            <div class="arch-block">FC<br/><small>1024→512</small></div>
+            <div class="arch-arrow">→</div>
+            <div class="arch-block output-b">Output<br/><small>156 classes</small></div>
+        </div>
+        <div class="tech-tags">
+            <span class="tag">PyTorch 2.x</span>
+            <span class="tag">Flask</span>
+            <span class="tag">Python 3.11</span>
+            <span class="tag">Pillow</span>
+            <span class="tag">SciPy</span>
+            <span class="tag">NumPy</span>
+            <span class="tag">BatchNorm</span>
+            <span class="tag">Softmax</span>
+            <span class="tag">Google Colab GPU</span>
+        </div>
+    </div>
+
+</section>
+
+<footer class="footer">
+    <p>Built with ❤️ by <strong>Haris &amp; Sijas</strong> &nbsp;·&nbsp;
+       <a href="https://github.com/ganeshmm/TamilNet">GitHub</a> &nbsp;·&nbsp;
+       <a href="https://linkedin.com/in/ccm07">LinkedIn</a>
+    </p>
+    <p class="footer-sub">Tamil Character Recognition · Deep Learning · CNN · Flask · 2024</p>
+</footer>
+
+<script>
+// ── Tab switch ──
+function switchTab(tab) {
+    ['draw','upload'].forEach(t => {
+        document.getElementById(t+'-section').style.display = t===tab ? 'flex' : 'none';
+        document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+    });
+    document.getElementById('guess').innerText = '';
+    document.getElementById('confidence').innerText = '';
+    document.getElementById('result-idle').style.display = 'flex';
+}
+
+// ── Upload ──
+function handleFileSelect(e) { if(e.target.files[0]) showPreview(e.target.files[0]); }
+function showPreview(file) {
+    const r = new FileReader();
+    r.onload = e => {
+        const img = document.getElementById('preview-img');
+        img.src = e.target.result; img.style.display = 'block';
+        document.getElementById('drop-inner').style.display = 'none';
+    };
+    r.readAsDataURL(file);
+}
+function clearUpload() {
+    document.getElementById('file-input').value = '';
+    document.getElementById('preview-img').style.display = 'none';
+    document.getElementById('preview-img').src = '';
+    document.getElementById('drop-inner').style.display = 'flex';
+    document.getElementById('guess').innerText = '';
+    document.getElementById('confidence').innerText = '';
+    document.getElementById('result-idle').style.display = 'flex';
+}
+function submitUpload() {
+    const fi = document.getElementById('file-input');
+    if(!fi.files[0]){ alert('Please select an image first!'); return; }
+    const sp = document.getElementById('upload-spinner');
+    sp.style.display = 'block';
+    document.getElementById('result-idle').style.display = 'none';
+    document.getElementById('guess').innerText = '';
+    document.getElementById('confidence').innerText = '';
+    const fd = new FormData(); fd.append('image', fi.files[0]);
+    fetch('/predict_upload',{method:'POST',body:fd})
+        .then(r=>r.text()).then(res=>{
+            sp.style.display='none';
+            const p=res.split('|');
+            if(p.length===2){ popResult(p[0],'(confidence: '+p[1]+'%)'); }
+            else { document.getElementById('guess').innerText=res; }
+        }).catch(()=>{ sp.style.display='none'; document.getElementById('guess').innerText='Error!'; });
+}
+function popResult(char, conf) {
+    const g = document.getElementById('guess');
+    const c = document.getElementById('confidence');
+    document.getElementById('result-idle').style.display = 'none';
+    g.innerText = char; c.innerText = conf;
+    g.classList.remove('pop'); void g.offsetWidth; g.classList.add('pop');
+}
+
+// ── Drag drop ──
+document.addEventListener('DOMContentLoaded', () => {
+    const dz = document.getElementById('drop-zone');
+    dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('drag-over'); });
+    dz.addEventListener('dragleave', ()=>dz.classList.remove('drag-over'));
+    dz.addEventListener('drop', e=>{ e.preventDefault(); dz.classList.remove('drag-over');
+        const f=e.dataTransfer.files[0]; if(f&&f.type.startsWith('image/')) showPreview(f); });
+
+    // Counter animation
+    document.querySelectorAll('.stat-num[data-target]').forEach(el=>{
+        const t=+el.dataset.target; let c=0;
+        const step=Math.max(1,Math.ceil(t/60));
+        const timer=setInterval(()=>{ c=Math.min(c+step,t); el.textContent=c; if(c>=t)clearInterval(timer); },18);
+    });
+
+    // Scroll fade-in
+    const obs=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); }),{threshold:0.12});
+    document.querySelectorAll('.fade-up').forEach(el=>obs.observe(el));
+
+    // Observe guess element for main.js canvas predictions
+    const g=document.getElementById('guess');
+    new MutationObserver(()=>{
+        if(g.innerText.trim()){ document.getElementById('result-idle').style.display='none';
+            g.classList.remove('pop'); void g.offsetWidth; g.classList.add('pop'); }
+    }).observe(g,{childList:true,characterData:true,subtree:true});
+});
+</script>
+</body>
+</html>
